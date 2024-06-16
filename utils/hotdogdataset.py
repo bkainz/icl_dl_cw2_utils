@@ -7,26 +7,47 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 from PIL import Image
 import glob
+import math
 from pathlib import Path
 from typing import Any, Callable, Optional, Tuple, Union
+import torch
+import numpy as np
 
 class DLHotDogDataset(Dataset):
-    def __init__(self, root: Union[str, Path], url="https://www.doc.ic.ac.uk/~bkainz/teaching/DL/hotdogs.zip",  
-                 md5_url="https://www.doc.ic.ac.uk/~bkainz/teaching/DL/hotdogs.md5", transform: Optional[Callable] =None):
+    def __init__(self, root: Union[str, Path], url="https://www.doc.ic.ac.uk/~bkainz/teaching/DL/hot-dog-10k.zip",  
+                 md5_url="https://www.doc.ic.ac.uk/~bkainz/teaching/DL/hot-dog-10k.md5", 
+                 transform: Optional[Callable] =None, split='train', preload=False):
         self.url = url
         self.root = Path(root)
         self.md5_url = md5_url
-        self.zip_filename = os.path.join(root, "hotdogs.zip")
-        self.md5_filename = os.path.join(root, "hotdogs.md5")
-        self.data_folder = Path(os.path.join(root, "hotdogs"))
+        self.zip_filename = os.path.join(root, "hot-dog-10k.zip")
+        self.md5_filename = os.path.join(root, "hot-dog-10k.md5")
+        self.data_folder = Path(os.path.join(root, "hot-dog-10k"))
         self.transform = transform
+        self.preload = preload
 
         if not os.path.exists(self.data_folder):
             self.download_and_extract()
             self.rename_files()
 
         self.image_paths = list(self.data_folder.glob('**/*.jpg')) + list(self.data_folder.glob('**/*.png')) + list(self.data_folder.glob('**/*.jpeg'))
+        slen = len(self.image_paths)
+        if split == 'train':
+            self.image_paths = self.image_paths[:math.floor(slen*0.9)]
+        elif split == 'test':
+            self.image_paths = self.image_paths[math.floor(slen*0.9):]
+        else:
+            print("split type unknown, using all data")
         print("number of hot dogs: ", len(self.image_paths))
+
+        if self.preload:
+            self.images = [self.load_image(path) for path in self.image_paths]
+
+    def load_image(self, path):
+        image = Image.open(path).convert("RGB")
+        if self.transform:
+            image = self.transform(image)
+        return image
 
     def download_file(self, url, filename):
         print(f"Downloading {url}...")
@@ -88,10 +109,23 @@ class DLHotDogDataset(Dataset):
         return len(self.image_paths)
 
     def __getitem__(self, idx):
-        img_path = self.image_paths[idx]
-        image = Image.open(img_path).convert("RGB")
-        if self.transform:
-            image = self.transform(image)
-        return image
+        if self.preload:
+            image = self.images[idx]
+        else:
+            img_path = self.image_paths[idx]
+            image = self.load_image(img_path)
+        return image, 0
 
+    def calculate_mean_and_std(self):
+        if self.preload:
+            images = self.images
+        else:
+            images = [self.load_image(path) for path in self.image_paths]
 
+        # Convert images to tensors and concatenate them
+        all_data = torch.cat([transforms.ToTensor()(np.array(image)).view(-1, 3) for image in images], dim=0)
+        
+        mean = all_data.mean()
+        std = all_data.std()
+        
+        return mean, std
