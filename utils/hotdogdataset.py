@@ -14,15 +14,15 @@ import torch
 import numpy as np
 
 class DLHotDogDataset(Dataset):
-    def __init__(self, root: Union[str, Path], url="https://www.doc.ic.ac.uk/~bkainz/teaching/DL/hot-dog-10k.zip",  
-                 md5_url="https://www.doc.ic.ac.uk/~bkainz/teaching/DL/hot-dog-10k.md5", 
+    def __init__(self, root: Union[str, Path], url="https://www.doc.ic.ac.uk/~bkainz/teaching/DL/hot-dog-10k_c.zip",  
+                 md5_url="https://www.doc.ic.ac.uk/~bkainz/teaching/DL/hot-dog-10k_c.md5", 
                  transform: Optional[Callable] =None, split='train', preload=False):
         self.url = url
         self.root = Path(root)
         self.md5_url = md5_url
-        self.zip_filename = os.path.join(root, "hot-dog-10k.zip")
-        self.md5_filename = os.path.join(root, "hot-dog-10k.md5")
-        self.data_folder = Path(os.path.join(root, "hot-dog-10k"))
+        self.zip_filename = os.path.join(root, "hot-dog-10k_c.zip")
+        self.md5_filename = os.path.join(root, "hot-dog-10k_c.md5")
+        self.data_folder = Path(os.path.join(root, "hot-dog-10k_c"))
         self.transform = transform
         self.preload = preload
 
