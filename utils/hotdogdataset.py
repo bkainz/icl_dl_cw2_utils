@@ -114,7 +114,8 @@ class DLHotDogDataset(Dataset):
         else:
             img_path = self.image_paths[idx]
             image = self.load_image(img_path)
-        return image, 0
+        #print(self.image_paths[idx])
+        return image, os.path.basename(self.image_paths[idx])
 
     def calculate_mean_and_std(self):
         if self.preload:

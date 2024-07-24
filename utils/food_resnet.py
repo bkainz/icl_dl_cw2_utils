@@ -28,7 +28,7 @@ from torchvision.models.resnet import Bottleneck
 
 import torch.utils.model_zoo as model_zoo
 import math
-batch_size =128
+batch_size =32
 
 def conv3x3(in_planes, out_planes, stride = 1):
 	return nn.Conv2d(in_planes, out_planes, kernel_size = 3, stride = stride, padding = 1, bias = False)
@@ -230,7 +230,7 @@ class HotDogClassifier:
         if not isinstance(images, torch.Tensor):
             images = self._transform_and_to_tensor(images)
         
-        images =  self.transform1(images.detach().to(self.device))
+        images =  self.transform1(images.to(self.device))
         outputs = self.model(images)
         probabilities = F.softmax(outputs, dim=1)
         predictions = torch.argmax(probabilities, dim=1)
